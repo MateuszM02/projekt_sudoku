@@ -27,7 +27,7 @@ typedef enum
 //funkcje inicjalizujace
 void InicjalizujPlansze(Plansza *p1);
 void InicjalizujPole(Pole *pole1);
-void NowyGuzik(GtkWidget *guzik);
+void NowyGuzik(GtkWidget *guzik); //nieużywana funkcja
 //funkcje generujace plansze
 void GenerujPlansze(Plansza *p1, int *rzad, int *kolumna);
 void LosujLiczbe(Pole *pole1, int *poprawne_liczby, int rozmiar);
@@ -41,8 +41,8 @@ bool CzyPoprawnaLiczbaRzad(Plansza *p1, int rzad, int kolumna, int liczba);
 bool CzyPoprawnaLiczbaKolumna(Plansza *p1, int rzad, int kolumna, int liczba);
 bool CzyPoprawnaLiczbaKwadrat(Plansza *p1, int rzad, int kolumna, int liczba);
 //funkcje pomocnicze
-void WypiszPlansze(Plansza *p1);
+void WypiszPlansze(Plansza *p1); //nieużywana funkcja
 void ZmienPole(int *rzad, int *kolumna, Opcja opcja);
 //sprawdzajace poprawnosc planszy
-void IleBledow(Plansza *p1);
-bool CzyDobryKwadrat(Plansza *p1,int i,int j);
+void IleBledow(Plansza *p1); //nieużywana funkcja
+bool CzyDobryKwadrat(Plansza *p1,int i,int j); //nieużywana funkcja
