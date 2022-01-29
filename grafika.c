@@ -7,12 +7,22 @@ GtkWidget *GUZIKI_PLANSZY[9][9];
 
 int RZAD = 0;
 int KOLUMNA = 0;
+int ILE_POL_PUSTYCH = 81;
+
+GtkCssProvider* provider;
+void InicjalizujCSS()
+{
+    GtkCssProvider* provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(provider, "style.css", NULL);
+    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+}
 
 //main
 
 void Grafika(int argc, char *argv[])
 {
     gtk_init(&argc, &argv);
+    InicjalizujCSS();
     GtkWidget *okno = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     StworzOkno(okno);
     //
@@ -37,22 +47,56 @@ Plansza StworzPlansze()
 
 int PokazPodpowiedzi(Plansza *p1, int ile_podpowiedzi)
 {
+    if(ile_podpowiedzi < 1 || ile_podpowiedzi > 80) return 0;
     int los = 0;
+    bool wybrano = false;
     for(int i = 0; i < ile_podpowiedzi; i++)
     {
+        wybrano = false;
         do
         {
             los = rand() % 81;
-            if(p1->pole[los/9][los%9].czy_domyslna == false)
+            if(p1->pole[los/9][los%9].czy_domyslna == false || p1->pole[los/9][los%9].wartosc_podana != p1->pole[los/9][los%9].wartosc)
             {
                 p1->pole[los/9][los%9].wartosc_podana = p1->pole[los/9][los%9].wartosc;
                 p1->pole[los/9][los%9].czy_domyslna = true;
+                wybrano = true;
             }
         }
-        while(p1->pole[los/9][los%9].czy_domyslna == false);
-        printf("%d rzad: %d kolumna: %d\n",i, los/9 + 1, los%9 + 1);
+        while(wybrano == false);
     }
+    ILE_POL_PUSTYCH -= ile_podpowiedzi;
     return los;
+}
+
+bool CzyKoniecGry(Plansza *p1)
+{
+    for(int i = 0; i < 9; i++)
+    {
+        for(int j = 0; j < 9; j++)
+        {
+            if(p1->pole[i][j].wartosc != p1->pole[i][j].wartosc_podana) return false;
+        }
+    }
+    return true;
+}
+
+void KoniecGry()
+{
+    GtkWidget *okno = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(okno),"Koniec gry!");
+    gtk_window_set_position(GTK_WINDOW(okno),GTK_WIN_POS_CENTER_ALWAYS);
+    gtk_window_set_default_size(GTK_WINDOW(okno),400,400);
+    g_signal_connect(G_OBJECT(okno),"destroy",G_CALLBACK(gtk_main_quit),NULL);
+    //wiadomosc koncowa
+    GtkWidget *label = gtk_label_new("Gratulacje! Udalo ci sie rozwiazac gre!");
+    gtk_container_add(GTK_CONTAINER(okno),label);
+    gtk_widget_show_all(okno);
+    //CSS
+    GtkStyleContext *context = gtk_widget_get_style_context(okno);
+    gtk_style_context_add_class(context, "okno");
+    context = gtk_widget_get_style_context(label);
+    gtk_style_context_add_class(context, "wygrana");
 }
 
 //inicjalizatory
@@ -64,6 +108,9 @@ void StworzOkno(GtkWidget *window)
     gtk_window_set_default_size(GTK_WINDOW(window),400,400);
     g_signal_connect(G_OBJECT(window),"destroy",G_CALLBACK(gtk_main_quit),NULL);
     gtk_widget_show(window);
+    //CSS
+    GtkStyleContext *context = gtk_widget_get_style_context(window);
+    gtk_style_context_add_class(context, "okno");
 }
 
 //ekrany gry
@@ -79,20 +126,18 @@ void EkranStartowy(GtkWidget *okno)
     GtkWidget *label = gtk_label_new("Wybierz poziom trudnosci:"); // do wprowadzania wyrazenia
     gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
     //przyciski
+    const gchar *name[5]= {"latwy","sredni","trudny","niestandardowy","inne"};
+    GtkStyleContext *context[4];
     for (int i = 0; i < 4; i++)
     {
-        const gchar *name;
-        if(i==0) name = "latwy";
-        else if(i==1) name = "sredni";
-        else if(i==2) name = "trudny";
-        else if(i==3) name = "niestandardowy";
-        else name = "x";
-        //
-        GtkWidget *button = gtk_button_new_with_label(name);
-        //
+        GtkWidget *button = gtk_button_new_with_label(name[i]);
         g_signal_connect(G_OBJECT(button), "clicked",G_CALLBACK(KliknietoGuzikWyboruPoziomu),okno);
-        gtk_widget_set_name(button,name);
+        gtk_widget_set_name(button,name[i]);
         gtk_grid_attach(GTK_GRID(grid), button, 0, i + 1, 1, 1);
+        //CSS
+        context[i] = gtk_widget_get_style_context(button);
+        gtk_style_context_add_class(context[i], name[i]);
+
     }
     gtk_widget_show_all(okno);
 }
@@ -116,6 +161,8 @@ void EkranGry(Plansza p1)
             {
                 char *wartosc = g_strdup_printf("%d",p1.pole[i][j].wartosc);
                 gtk_button_set_label(GTK_BUTTON(GUZIKI_PLANSZY[i][j]),wartosc);
+                GtkStyleContext *context = gtk_widget_get_style_context(GUZIKI_PLANSZY[i][j]);
+                gtk_style_context_add_class(context, "pole");
             }
             g_signal_connect(G_OBJECT(GUZIKI_PLANSZY[i][j]),"clicked",G_CALLBACK(KliknietoGuzikPola),&p1);
             gtk_grid_attach(GTK_GRID(siatka),GUZIKI_PLANSZY[i][j],j,i,1,1);
@@ -129,6 +176,8 @@ void EkranGry(Plansza p1)
             char *numer = g_strdup_printf("%d", 3*i+j+1);
             GtkWidget *button = gtk_button_new_with_label(numer);
             gtk_widget_set_name(button,numer);
+            GtkStyleContext *context = gtk_widget_get_style_context(button);
+            gtk_style_context_add_class(context, "liczba");
             g_signal_connect(G_OBJECT(button),"clicked",G_CALLBACK(KliknietoWybranaLiczbe),&p1);
             gtk_grid_attach(GTK_GRID(siatka),button,10+j,i,1,1);
         }
@@ -137,14 +186,19 @@ void EkranGry(Plansza p1)
     GtkWidget *fake_label = gtk_label_new("");
     gtk_widget_set_size_request(fake_label,50,10);
     gtk_grid_attach(GTK_GRID(siatka),fake_label,9,0,1,1);
-    //
+    //guzik odpowiedzialny za podpowiedzi
     GtkWidget *podpowiedz = gtk_button_new_with_label("podpowiedz");
     g_signal_connect(G_OBJECT(podpowiedz),"clicked",G_CALLBACK(Podaj1Podpowiedz),&p1);
     gtk_grid_attach(GTK_GRID(siatka),podpowiedz,10,4,3,2);
-    //
-    GtkWidget *sprawdz = gtk_button_new_with_label("sprawdz poprawnosc odpowiedzi");
-    g_signal_connect(G_OBJECT(sprawdz),"clicked",G_CALLBACK(SprawdzPoprawnosc),okno);
+    //guzik odpowiedzialny za sprawdzanie poprawnosci liczb podanych przez uzytkownika
+    GtkWidget *sprawdz = gtk_button_new_with_label("sprawdz poprawnosc \nswoich odpowiedzi");
+    g_signal_connect(G_OBJECT(sprawdz),"clicked",G_CALLBACK(SprawdzPoprawnosc),&p1);
     gtk_grid_attach(GTK_GRID(siatka),sprawdz,10,7,3,2);
+    //podpiecie 2 ostatnich guzikow do CSS
+    GtkStyleContext *context = gtk_widget_get_style_context(podpowiedz);
+    gtk_style_context_add_class(context, "podpowiedz");
+    context = gtk_widget_get_style_context(sprawdz);
+    gtk_style_context_add_class(context, "sprawdz");
     //
     gtk_widget_show_all(siatka);
     gtk_main();
@@ -178,26 +232,48 @@ void KliknietoGuzikPola(GtkWidget *guzik, Plansza *plansza)
 void KliknietoWybranaLiczbe(GtkWidget *guzik, Plansza *plansza)
 {
     if(plansza->pole[RZAD][KOLUMNA].czy_domyslna == true)  return;
+    if(plansza->pole[RZAD][KOLUMNA].wartosc_podana == 0) ILE_POL_PUSTYCH--;
     int liczba = atoi(gtk_widget_get_name(guzik));
     plansza->pole[RZAD][KOLUMNA].wartosc_podana = liczba;
     gtk_button_set_label(GTK_BUTTON(GUZIKI_PLANSZY[RZAD][KOLUMNA]),gtk_widget_get_name(guzik));
+    //CSS
+    GtkStyleContext *context = gtk_widget_get_style_context(GUZIKI_PLANSZY[RZAD][KOLUMNA]);
+    gtk_style_context_remove_class(context,"pole_zle");
+    gtk_style_context_add_class(context, "pole_uzytkownik");
+    //sprawdza, czy uzytkownik uzupelnil wszystkie pola na planszy i jesli tak, to czy wszystkie prawidlowo
+    if(ILE_POL_PUSTYCH <= 0 && CzyKoniecGry(plansza))   KoniecGry();
 }
 
 void Podaj1Podpowiedz(GtkWidget *guzik, Plansza *plansza)
 {
+    if(ILE_POL_PUSTYCH <= 0 && CzyKoniecGry(plansza))
+    {
+        KoniecGry();
+        return;
+    }
     int x = PokazPodpowiedzi(plansza,1); //ustala lokalizacje guzika, w ktorym umiesci podpowiedz
     gtk_button_set_label(GTK_BUTTON(GUZIKI_PLANSZY[x/9][x%9]),g_strdup_printf("%d", plansza->pole[x/9][x%9].wartosc));
+    printf("%d\n",ILE_POL_PUSTYCH);
+    //CSS
+    GtkStyleContext *context = gtk_widget_get_style_context(GUZIKI_PLANSZY[x/9][x%9]);
+    gtk_style_context_add_class(context, "pole");
 }
 
-void SprawdzPoprawnosc(GtkWidget *guzik, Plansza *plansza) ///nie dziala
+void SprawdzPoprawnosc(GtkWidget *guzik, Plansza *plansza)
 {
     for(int i = 0; i < 9; i++)
     {
         for(int j = 0; j < 9; j++)
         {
-            if(plansza->pole[i][j].wartosc_podana == 0) continue;
+            if(plansza->pole[i][j].czy_domyslna) continue; //jesli pole jest uzupelnione przez algorytm
+            else if(plansza->pole[i][j].wartosc_podana == 0) continue; //jesli pole jest puste
+            //jesli uzytkownik podal zla wartosc:
             if(plansza->pole[i][j].wartosc != plansza->pole[i][j].wartosc_podana)
-                printf("%d %d\n",i,j);
+            {
+                printf("rzad:%d, kolumna:%d\n",i+1,j+1);
+                GtkStyleContext *context = gtk_widget_get_style_context(GUZIKI_PLANSZY[i][j]);
+                gtk_style_context_add_class(context, "pole_zle");
+            }
         }
     }
 }
