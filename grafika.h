@@ -5,10 +5,14 @@
 
 //---------------------------------------------------------
 
-//---------------------------------------------------------
-
 void Grafika(int argc, char *argv[]);
 void StworzOkno(GtkWidget *window);
+//grafika
+Plansza StworzPlansze();
+int PokazPodpowiedzi(Plansza *p1, int ile_podpowiedzi);
+void InicjalizujCSS();
+bool CzyKoniecGry(Plansza *p1);
+void KoniecGry();
 //ekrany gry
 void EkranStartowy(GtkWidget *okno);
 void EkranGry(Plansza p1);
@@ -18,8 +22,5 @@ void KliknietoGuzikPola(GtkWidget *guzik, Plansza *plansza);
 void KliknietoWybranaLiczbe(GtkWidget *guzik, Plansza *plansza);
 void Podaj1Podpowiedz(GtkWidget *guzik, Plansza *plansza);
 void SprawdzPoprawnosc(GtkWidget *guzik, Plansza *plansza);
-//pomocnicze
-Plansza StworzPlansze();
-int PokazPodpowiedzi(Plansza *p1, int ile_podpowiedzi);
 
 //---------------------------------------------------------
