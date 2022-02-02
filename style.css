@@ -1,0 +1,71 @@
+.okno
+{
+    background-color: #add6e6;
+}
+
+.wygrana
+{
+    font-size: 32px;
+}
+
+/*style guzikow na planszy*/
+.pole
+{
+    font-size: 24px;
+    color: green;
+}
+
+.pole_uzytkownik
+{
+    font-size: 24px;
+    color: grey;
+}
+
+.pole_zle
+{
+    font-size: 24px;
+    color: red;
+}
+
+.liczba
+{
+    font-size: 24px;
+    color: orange;
+}
+
+.podpowiedz
+{
+    font-size: 18px;
+    color: blue;
+}
+
+.sprawdz
+{
+    font-size: 14px;
+    color: blue;
+}
+
+/*style guzikow wyboru poziomu*/
+.latwy
+{
+    font-size: 24px;
+    color: green;
+}
+
+.sredni
+{
+    font-size: 24px;
+    color: yellow;
+}
+
+.trudny
+{
+    font-size: 24px;
+    color: orange;
+}
+
+.niestandardowy
+{
+    font-size: 24px;
+    color: red;
+}
